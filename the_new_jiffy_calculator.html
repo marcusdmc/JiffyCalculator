@@ -1,0 +1,1425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The New Jiffy Calculator — Interactive Photographic Exposure Slide Rule</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --paper-cream: #f6f1e3;
+      --paper-card: #efe8d4;
+      --paper-slide: #fffdf7;
+      --paper-shadow: #d5cbb3;
+      --ink-black: #1c1917;
+      --ink-muted: #57534e;
+      --accent-red: #b91c1c;
+      --accent-amber: #b45309;
+      --cursor-tint: rgba(220, 38, 38, 0.14);
+      --cursor-border: rgba(185, 28, 28, 0.85);
+      --row-h: 28px;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #292524;
+      background-image:
+        radial-gradient(circle at 20% 20%, rgba(255,255,255,0.04) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(0,0,0,0.25) 0%, transparent 50%);
+      color: var(--ink-black);
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .font-card-title {
+      font-family: 'Oswald', sans-serif;
+      letter-spacing: 0.04em;
+    }
+
+    .font-mono-scale {
+      font-family: 'Courier Prime', monospace;
+    }
+
+    /* Tactile Vintage Cardstock Paper Texture */
+    .paper-sleeve {
+      background-color: var(--paper-card);
+      background-image:
+        linear-gradient(135deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0) 40%, rgba(0,0,0,0.04) 100%),
+        repeating-linear-gradient(0deg, rgba(120, 113, 108, 0.03) 0px, rgba(120, 113, 108, 0.03) 1px, transparent 1px, transparent 3px);
+      box-shadow:
+        0 20px 45px rgba(0, 0, 0, 0.45),
+        0 2px 6px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8),
+        inset 0 -2px 4px rgba(120, 100, 70, 0.25);
+      border: 1px solid #cbbda0;
+    }
+
+    /* Sliding Paper Insert Strip */
+    .paper-insert {
+      background-color: var(--paper-slide);
+      background-image:
+        linear-gradient(90deg, rgba(0,0,0,0.09) 0%, rgba(255,255,255,0.65) 14%, rgba(255,255,255,0.3) 86%, rgba(0,0,0,0.1) 100%);
+      transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+      will-change: transform;
+      touch-action: none;
+      cursor: grab;
+      z-index: 5;
+      min-height: 100%;
+    }
+
+    .paper-insert:active,
+    .paper-insert.is-dragging {
+      transition: none !important;
+      cursor: grabbing;
+    }
+
+    /* Recessed Die-Cut Window Frame */
+    .cutout-window {
+      position: relative;
+      overflow: hidden;
+      background: #e2d8be;
+      border: 2px solid #292524;
+      box-shadow:
+        inset 0 4px 8px rgba(0, 0, 0, 0.28),
+        inset 0 -3px 6px rgba(0, 0, 0, 0.16),
+        inset 3px 0 5px rgba(0, 0, 0, 0.14),
+        inset -3px 0 5px rgba(0, 0, 0, 0.14),
+        0 1px 0 rgba(255, 255, 255, 0.7);
+      touch-action: none;
+    }
+
+    /* Glass Hairline Cursor Bar */
+    .cursor-hairline {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: var(--row-h);
+      background: var(--cursor-tint);
+      border-top: 2px solid var(--cursor-border);
+      border-bottom: 2px solid var(--cursor-border);
+      box-shadow: 0 2px 6px rgba(185, 28, 28, 0.22);
+      pointer-events: none;
+      z-index: 25;
+      transition: top 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .cursor-hairline::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 50%;
+      height: 1px;
+      background: rgba(185, 28, 28, 0.35);
+      transform: translateY(-50%);
+    }
+
+    /* Fixed Sleeve Columns with Inner Edge Shadow over Slider */
+    .fixed-column-left {
+      background-color: var(--paper-cream);
+      border-right: 2px solid #292524;
+      box-shadow: 4px 0 8px rgba(0, 0, 0, 0.18);
+      z-index: 15;
+    }
+
+    .fixed-column-right {
+      background-color: var(--paper-cream);
+      border-left: 2px solid #292524;
+      box-shadow: -4px 0 8px rgba(0, 0, 0, 0.18);
+      z-index: 15;
+    }
+
+    .scale-row {
+      height: var(--row-h);
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid rgba(41, 37, 36, 0.18);
+      box-sizing: border-box;
+    }
+
+    .scale-row-major {
+      border-bottom: 1px solid rgba(41, 37, 36, 0.36);
+    }
+
+    /* Slide Grip Tabs Top & Bottom */
+    .slide-tab {
+      background: linear-gradient(180deg, #faf6eb 0%, #e7dec6 100%);
+      border: 1.5px solid #292524;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.9);
+      cursor: grab;
+      touch-action: none;
+    }
+    .slide-tab:active {
+      cursor: grabbing;
+    }
+
+    /* Custom Range Slider for Direct Insert Positioning */
+    input[type="range"].jiffy-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      background: transparent;
+      cursor: pointer;
+    }
+    input[type="range"].jiffy-slider::-webkit-slider-runnable-track {
+      height: 8px;
+      background: #cbbda0;
+      border-radius: 999px;
+      border: 1px solid #57534e;
+    }
+    input[type="range"].jiffy-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 999px;
+      background: #b91c1c;
+      border: 2px solid #fffdf7;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.35);
+      margin-top: -7px;
+    }
+
+    /* Custom subtle scrollbars for reference directory */
+    .custom-scroll::-webkit-scrollbar {
+      width: 7px;
+      height: 7px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: #e7dec8;
+      border-radius: 4px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #a89f8c;
+      border-radius: 4px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb:hover {
+      background: #78716c;
+    }
+
+    @media (max-width: 640px) {
+      :root {
+        --row-h: 26px;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen py-4 px-3 sm:px-6 lg:px-8 flex flex-col items-center">
+
+  <!-- Top App Header & Mode Bar -->
+  <header class="w-full max-w-6xl mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3 bg-stone-900/90 text-stone-100 px-4 py-3 rounded-xl border border-stone-700 shadow-lg">
+    <div>
+      <div class="flex items-center gap-2.5">
+        <span class="inline-flex items-center justify-center w-7 h-7 rounded bg-red-700 text-amber-50 font-card-title font-bold text-sm tracking-wider shadow">EV</span>
+        <h1 class="font-card-title text-xl sm:text-2xl font-bold tracking-wide text-amber-50 uppercase">
+          The New Jiffy Calculator
+        </h1>
+        <span class="hidden sm:inline-block text-xs px-2 py-0.5 rounded bg-stone-800 text-amber-300 border border-stone-700 font-mono-scale">
+          1/2-STOP SLIDE RULE
+        </span>
+      </div>
+      <p class="text-xs text-stone-400 mt-0.5">
+        Based on S. P. Martin’s Jiffy Calculator • Data from Fred Parker’s Ultimate Exposure Computer • Modified by M. Zomborszki
+      </p>
+    </div>
+
+    <!-- Quick Mode & Action Controls -->
+    <div class="flex flex-wrap items-center gap-2">
+      <button id="btn-mode-normal" onclick="setSpecialMode('normal')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition bg-amber-600 text-white shadow cursor-pointer">
+        Standard Scenes
+      </button>
+      <button id="btn-mode-moon" onclick="setSpecialMode('moon')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition bg-stone-800 hover:bg-stone-700 text-stone-200 border border-stone-600 cursor-pointer">
+        🌙 Moon Shots
+      </button>
+      <button id="btn-mode-stars" onclick="setSpecialMode('stars')" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition bg-stone-800 hover:bg-stone-700 text-stone-200 border border-stone-600 cursor-pointer">
+        ✨ Star Trails
+      </button>
+      <button onclick="openHowToModal()" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition bg-stone-800 hover:bg-stone-700 text-amber-300 border border-stone-600 cursor-pointer">
+        ? How to Use
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Workspace Grid: Left = Tactile Cardstock Slide Rule, Right = Live Readout + 26 Scenes & EV Directory -->
+  <main class="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+
+    <!-- LEFT COLUMN: PHYSICAL TACTILE JIFFY SLIDE RULE (6 cols on lg) -->
+    <section class="lg:col-span-6 flex flex-col items-center">
+
+      <!-- Top Slide Pull Tab -->
+      <div id="top-slide-tab" class="slide-tab w-48 sm:w-56 h-8 rounded-t-xl flex items-center justify-center gap-2 text-stone-800 font-card-title text-xs font-bold tracking-widest uppercase select-none" title="Drag up or down to slide insert">
+        <span>▲</span>
+        <span>SLIDE INSERT</span>
+        <span>▼</span>
+      </div>
+
+      <!-- Main Cardstock Sleeve Body -->
+      <div class="paper-sleeve w-full rounded-2xl p-3 sm:p-5 relative">
+
+        <!-- Card Header Stamp -->
+        <div class="flex items-center justify-between border-b-2 border-stone-800 pb-2 mb-3">
+          <div>
+            <h2 class="font-card-title text-lg sm:text-xl font-bold tracking-wider uppercase text-stone-900 leading-none">
+              THE NEW JIFFY CALCULATOR
+            </h2>
+            <p class="text-[11px] text-stone-700 mt-1 font-medium">
+              Align <span class="font-bold text-red-800">FILM SPEED</span> with <span class="font-bold text-red-800">SCENE NUMBER</span> (or EV)
+            </p>
+          </div>
+
+          <!-- Mechanical Step Controls -->
+          <div class="flex items-center gap-1.5">
+            <button onclick="nudgeSlide(1)" class="w-9 h-9 rounded-lg bg-stone-800 hover:bg-stone-700 active:scale-95 text-amber-50 font-bold text-base flex items-center justify-center shadow cursor-pointer" title="Slide Insert Up (+1/2 Stop)">
+              ▲
+            </button>
+            <button onclick="nudgeSlide(-1)" class="w-9 h-9 rounded-lg bg-stone-800 hover:bg-stone-700 active:scale-95 text-amber-50 font-bold text-base flex items-center justify-center shadow cursor-pointer" title="Slide Insert Down (-1/2 Stop)">
+              ▼
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick Alignment Bar inside Card -->
+        <div class="grid grid-cols-3 gap-2 mb-2.5 bg-[#e5dcc5] p-2 rounded-xl border border-stone-400/70">
+          <div>
+            <label for="select-iso" class="block text-[10px] font-bold uppercase tracking-wider text-stone-700 mb-0.5">Film ISO</label>
+            <select id="select-iso" onchange="onSelectISO(this.value)" class="w-full bg-[#fbf8ef] border border-stone-700 rounded-md px-2 py-1 text-xs font-mono-scale font-bold text-stone-900 focus:outline-none focus:ring-2 focus:ring-red-700">
+            </select>
+          </div>
+          <div>
+            <label for="select-scene" class="block text-[10px] font-bold uppercase tracking-wider text-stone-700 mb-0.5">Scene #</label>
+            <select id="select-scene" onchange="onSelectScene(this.value)" class="w-full bg-[#fbf8ef] border border-stone-700 rounded-md px-2 py-1 text-xs font-mono-scale font-bold text-stone-900 focus:outline-none focus:ring-2 focus:ring-red-700">
+            </select>
+          </div>
+          <div>
+            <label for="select-ev" class="block text-[10px] font-bold uppercase tracking-wider text-stone-700 mb-0.5">EV @ ISO 100</label>
+            <select id="select-ev" onchange="onSelectEV(this.value)" class="w-full bg-[#fbf8ef] border border-stone-700 rounded-md px-2 py-1 text-xs font-mono-scale font-bold text-stone-900 focus:outline-none focus:ring-2 focus:ring-red-700">
+            </select>
+          </div>
+        </div>
+
+        <!-- Direct Slide Insert Scrub Bar -->
+        <div class="mb-3 bg-[#e5dcc5] px-3 py-2 rounded-xl border border-stone-400/70 flex items-center gap-3">
+          <span class="text-[10px] font-card-title font-bold uppercase tracking-wider text-stone-800 whitespace-nowrap">
+            Slide Position:
+          </span>
+          <input
+            id="insert-range-slider"
+            type="range"
+            min="-12"
+            max="42"
+            value="11"
+            oninput="onRangeSlide(this.value)"
+            class="jiffy-slider w-full"
+            title="Slide insert strip smoothly"
+          />
+          <span id="slider-pos-badge" class="font-mono-scale text-[11px] font-bold text-red-900 whitespace-nowrap">
+            Scene 8
+          </span>
+        </div>
+
+        <!-- DUAL CUT-OUT WINDOWS CONTAINER -->
+        <div class="grid grid-cols-2 gap-2.5 sm:gap-4">
+
+          <!-- LEFT WINDOW: FILM SPEED (Fixed) | SCENE NUMBER & EV @ ISO 100 (Sliding) -->
+          <div class="flex flex-col">
+            <!-- Window Column Headers -->
+            <div class="grid grid-cols-12 text-center border-2 border-b-0 border-stone-800 rounded-t-lg bg-[#e2d7bc] py-1.5 px-1 text-[10px] sm:text-[11px] font-card-title font-bold uppercase leading-tight tracking-wide text-stone-900">
+              <div class="col-span-5 border-r border-stone-500/50 pr-0.5">FILM<br/>SPEED</div>
+              <div class="col-span-4 border-r border-stone-500/50 px-0.5 text-red-900">SCENE<br/>NUMBER</div>
+              <div class="col-span-3 pl-0.5">EV<br/><span class="text-[9px] font-normal">@ISO100</span></div>
+            </div>
+
+            <!-- Left Cutout Window Viewport -->
+            <div id="left-window" class="cutout-window rounded-b-lg grid grid-cols-12 relative cursor-ns-resize" style="height: 588px;">
+              <!-- Red/Amber Translucent Hairline Cursor Bar -->
+              <div id="left-cursor" class="cursor-hairline"></div>
+
+              <!-- Fixed Left Column: FILM SPEED -->
+              <div id="film-speed-col" class="col-span-5 fixed-column-left relative">
+                <!-- Populated by JS -->
+              </div>
+
+              <!-- Sliding Insert Strip: SCENE NUMBER & EV @ ISO 100 -->
+              <div id="left-slider-strip" class="col-span-7 paper-insert relative">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT WINDOW: SHUTTER SPEED or EXPOSURE TIME (Sliding) | f/STOP (Fixed) -->
+          <div class="flex flex-col">
+            <!-- Window Column Headers -->
+            <div class="grid grid-cols-12 text-center border-2 border-b-0 border-stone-800 rounded-t-lg bg-[#e2d7bc] py-1.5 px-1 text-[10px] sm:text-[11px] font-card-title font-bold uppercase leading-tight tracking-wide text-stone-900">
+              <div class="col-span-7 border-r border-stone-500/50 pr-0.5">SHUTTER SPEED<br/><span class="text-[9px] font-normal">or EXPOSURE TIME</span></div>
+              <div class="col-span-5 pl-0.5 text-red-900">f/STOP<br/><span class="text-[9px] font-normal">APERTURE</span></div>
+            </div>
+
+            <!-- Right Cutout Window Viewport -->
+            <div id="right-window" class="cutout-window rounded-b-lg grid grid-cols-12 relative cursor-ns-resize" style="height: 588px;">
+              <!-- Red/Amber Translucent Hairline Cursor Bar -->
+              <div id="right-cursor" class="cursor-hairline"></div>
+
+              <!-- Sliding Insert Strip: SHUTTER SPEED -->
+              <div id="right-slider-strip" class="col-span-7 paper-insert relative">
+                <!-- Populated by JS -->
+              </div>
+
+              <!-- Fixed Right Column: f/STOP -->
+              <div id="fstop-col" class="col-span-5 fixed-column-right relative">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Card Footer Instruction Strip -->
+        <div class="mt-3 pt-2 border-t border-stone-400 flex flex-wrap items-center justify-between gap-2 text-[11px] text-stone-800">
+          <span class="font-semibold">
+            💡 Drag either insert strip, move the slider bar, or scroll wheel
+          </span>
+          <span class="font-mono-scale font-bold text-red-900">
+            NOTE: &lt; 1/25s USE TRIPOD
+          </span>
+        </div>
+
+      </div>
+
+      <!-- Bottom Slide Pull Tab -->
+      <div id="bottom-slide-tab" class="slide-tab w-48 sm:w-56 h-8 rounded-b-xl flex items-center justify-center gap-2 text-stone-800 font-card-title text-xs font-bold tracking-widest uppercase select-none" title="Drag up or down to slide insert">
+        <span>▲</span>
+        <span>SLIDE INSERT</span>
+        <span>▼</span>
+      </div>
+
+    </section>
+
+    <!-- RIGHT COLUMN: LIVE EXPOSURE DASHBOARD + 26 SCENES & EV REFERENCE (6 cols on lg) -->
+    <section class="lg:col-span-6 flex flex-col gap-4">
+
+      <!-- Active Alignment & Exposure Readout Card -->
+      <div class="bg-[#f6f1e3] rounded-2xl p-4 sm:p-5 border border-stone-400 shadow-xl">
+        <div class="flex flex-wrap items-start justify-between gap-2 border-b border-stone-300 pb-3">
+          <div>
+            <span class="text-[11px] font-bold uppercase tracking-wider text-red-800">Current Alignment Readout</span>
+            <h3 id="readout-headline" class="font-card-title text-xl sm:text-2xl font-bold text-stone-900 mt-0.5">
+              ISO 400 @ Scene 8 (EV 5.5)
+            </h3>
+          </div>
+
+          <!-- Dynamic Warning Badges -->
+          <div id="warning-badges" class="flex flex-wrap gap-1.5">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <!-- Special Mode Banner (Moon Shots / Star Trails) -->
+        <div id="special-mode-banner" class="hidden mt-3 p-3 rounded-xl bg-amber-950 text-amber-50 border border-amber-700 text-xs leading-relaxed">
+        </div>
+
+        <!-- Active Scene Description Box -->
+        <div id="active-scene-card" class="mt-3 p-3 rounded-xl bg-[#ebe3ce] border border-stone-400/70">
+          <div class="flex items-center justify-between mb-1">
+            <span id="active-scene-badge" class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-stone-900 text-amber-300 font-mono-scale text-xs font-bold">
+              SCENE 8
+            </span>
+            <span id="active-ev-badge" class="font-mono-scale text-xs font-bold text-stone-700">
+              EV 5.5 @ ISO 100
+            </span>
+          </div>
+          <p id="active-scene-desc" class="text-xs sm:text-sm text-stone-800 leading-relaxed mt-1">
+            <!-- Populated dynamically -->
+          </p>
+        </div>
+
+        <!-- Highlighted Cursor Pair & Equivalent Exposures Strip -->
+        <div class="mt-3">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-stone-700">
+              Equivalent Shutter / Aperture Pairs (Click any pair to focus)
+            </span>
+            <span class="text-[11px] font-mono-scale text-stone-600" id="total-ev-label">
+              Effective EV: 7.5
+            </span>
+          </div>
+          <div id="equivalent-pairs-grid" class="grid grid-cols-3 sm:grid-cols-4 gap-1.5 max-h-44 overflow-y-auto custom-scroll pr-1">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Reference Directory Tabs: 26 Scene Numbers | EV Table (17 to -1) | Field Notes -->
+      <div class="bg-[#f6f1e3] rounded-2xl border border-stone-400 shadow-xl overflow-hidden flex flex-col">
+        <!-- Tab Bar -->
+        <div class="grid grid-cols-3 bg-[#e2d7bc] border-b border-stone-400 text-xs font-card-title font-bold uppercase tracking-wider">
+          <button id="tab-btn-scenes" onclick="switchRefTab('scenes')" class="py-2.5 px-2 bg-[#f6f1e3] text-red-900 border-b-2 border-red-800 cursor-pointer">
+            26 Scene Numbers
+          </button>
+          <button id="tab-btn-ev" onclick="switchRefTab('ev')" class="py-2.5 px-2 text-stone-700 hover:bg-[#ebe3ce] cursor-pointer">
+            EV Table (17 to -1)
+          </button>
+          <button id="tab-btn-notes" onclick="switchRefTab('notes')" class="py-2.5 px-2 text-stone-700 hover:bg-[#ebe3ce] cursor-pointer">
+            Card Instructions
+          </button>
+        </div>
+
+        <!-- TAB 1: ALL 26 SCENE NUMBERS -->
+        <div id="tab-panel-scenes" class="p-3 sm:p-4 flex flex-col gap-2.5">
+          <div class="relative">
+            <input
+              id="scene-search"
+              type="text"
+              oninput="renderSceneList()"
+              placeholder="Search scenes (e.g., neon, moon, campfire, skyline, Niagara, subway)..."
+              class="w-full bg-[#fbf8ef] border border-stone-400 rounded-lg pl-8 pr-3 py-1.5 text-xs text-stone-900 placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-red-700"
+            />
+            <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-stone-500 text-xs">🔍</span>
+          </div>
+
+          <div id="scene-list-container" class="max-h-80 overflow-y-auto custom-scroll space-y-1.5 pr-1">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <!-- TAB 2: EXPOSURE VALUES (EV 17 to -1) -->
+        <div id="tab-panel-ev" class="hidden p-3 sm:p-4">
+          <p class="text-xs text-stone-700 mb-2">
+            Click any <strong>EV</strong> row below to align the calculator for daylight, twilight, or general ambient conditions:
+          </p>
+          <div id="ev-list-container" class="max-h-80 overflow-y-auto custom-scroll divide-y divide-stone-300 border border-stone-300 rounded-lg bg-[#fbf8ef]">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <!-- TAB 3: CARD INSTRUCTIONS & SPECIAL RULES -->
+        <div id="tab-panel-notes" class="hidden p-4 max-h-96 overflow-y-auto custom-scroll space-y-3 text-xs text-stone-800 leading-relaxed">
+          <div class="p-3 rounded-lg bg-[#ebe3ce] border border-stone-300">
+            <h4 class="font-card-title font-bold text-sm uppercase text-red-900 mb-1">How to Use the Calculator</h4>
+            <ul class="list-disc pl-4 space-y-1">
+              <li>Line up <strong>Film Speed</strong> with the <strong>Scene Number</strong> in the left window.</li>
+              <li>Equivalent exposures (Shutter Speed &amp; f/Stop pairs) appear aligned in the right window.</li>
+              <li>In the left window, the <strong>EV</strong> can be found on the row matching <strong>Film Speed 100</strong>.</li>
+              <li>You can also align the EV with the Film Speed instead of Scene Number.</li>
+              <li><strong>Reciprocity Failure:</strong> You must adjust exposure to compensate for reciprocity failure on long exposures (1s+). Check your film’s datasheet.</li>
+            </ul>
+          </div>
+
+          <div class="p-3 rounded-lg bg-[#ebe3ce] border border-stone-300">
+            <h4 class="font-card-title font-bold text-sm uppercase text-amber-900 mb-1">Moon Shots (Moon Only, Not Scenes)</h4>
+            <p>
+              Set Film Speed at <strong>Scene 1</strong>. For <strong>Full Moon</strong>, close lens down 1 stop; for <strong>Half Moon</strong>, use exposure on calculator; for <strong>Crescent Moon</strong>, open up lens 1 stop.
+              <br/><span class="font-bold text-red-800">Note:</span> Shutter speed must be <strong>1/25s or faster</strong> or the moon will be blurred due to Earth’s rotation.
+            </p>
+          </div>
+
+          <div class="p-3 rounded-lg bg-[#ebe3ce] border border-stone-300">
+            <h4 class="font-card-title font-bold text-sm uppercase text-amber-900 mb-1">Star Trails</h4>
+            <p>
+              Line up Film Speed at <strong>Scene 26</strong>, and then convert shutter speeds to time exposures as follows: <strong>seconds become minutes</strong> and <strong>minutes become hours</strong>. Use long exposures!
+            </p>
+          </div>
+
+          <div class="p-3 rounded-lg bg-[#ebe3ce] border border-stone-300">
+            <h4 class="font-card-title font-bold text-sm uppercase text-stone-900 mb-1">General Instructions</h4>
+            <ul class="list-disc pl-4 space-y-1">
+              <li>For night photography, use fastest film possible. With black-and-white films, use tungsten indexes.</li>
+              <li>Flash-type and tungsten-type color films tend to give more normal renditions in “mazda” (incandescent) light. Daylight-type color film renders much warmer results, but is quite satisfactory.</li>
+              <li>It may be advisable at first, and especially with slower films, to bracket all exposures at least one stop over and one stop under.</li>
+              <li><strong>NOTE:</strong> If exposures are slower than <strong>1/25 second</strong>, <strong>USE TRIPOD</strong>.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- Modal: How to Use Dialog -->
+  <div id="howto-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 p-4">
+    <div class="bg-[#f6f1e3] border-2 border-stone-800 rounded-2xl max-w-lg w-full p-5 shadow-2xl text-stone-900">
+      <div class="flex items-center justify-between border-b border-stone-400 pb-2.5 mb-3">
+        <h3 class="font-card-title text-xl font-bold uppercase tracking-wide">How to Use The New Jiffy Calculator</h3>
+        <button onclick="closeHowToModal()" class="w-8 h-8 rounded-lg bg-stone-800 text-amber-50 font-bold hover:bg-stone-700 cursor-pointer">✕</button>
+      </div>
+      <div class="space-y-2.5 text-xs sm:text-sm text-stone-800 leading-relaxed">
+        <p><strong>1. Choose Your Film Speed (ISO):</strong> Click any ISO value in the left window (12 to 6400) or pick from the Film ISO dropdown to position the red hairline cursor.</p>
+        <p><strong>2. Align Scene Number or EV:</strong> Drag the vertical slide strip up or down, move the Slide Position bar, or click any Scene in the right-hand directory so your <strong>Scene Number</strong> lines up directly across from your <strong>Film Speed</strong>.</p>
+        <p><strong>3. Read Equivalent Exposures:</strong> Look across to the right window. Every <strong>f/Stop</strong> is now mechanically aligned with its exact <strong>Shutter Speed</strong>. Any combination in the right window yields the exact same exposure!</p>
+        <p><strong>4. Check Tripod &amp; Reciprocity Warnings:</strong> Exposures slower than 1/25s require a tripod, and exposures of 1 second or longer require film reciprocity compensation.</p>
+      </div>
+      <div class="mt-4 flex justify-end">
+        <button onclick="closeHowToModal()" class="px-4 py-2 rounded-lg bg-red-800 hover:bg-red-700 text-white font-semibold text-xs uppercase tracking-wider cursor-pointer">
+          Got It
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /**
+     * ============================================================================
+     * THE NEW JIFFY CALCULATOR — EXACT HALF-STOP SLIDE RULE ENGINE
+     * ============================================================================
+     */
+
+    // 1. Complete 26 Scene Numbers transcribed verbatim from the PDF
+    const SCENES_DATA = [
+      {
+        num: 1,
+        ev100: 9.0,
+        title: "Ice shows in multiple white spotlights",
+        desc: "Ice shows, in multiple white spotlights. If spotlights are colored, use Scene 4."
+      },
+      {
+        num: 2,
+        ev100: 8.5,
+        title: "Burning buildings, fires",
+        desc: "Burning buildings, fires. For detail in surrounding areas, use Scene 5."
+      },
+      {
+        num: 3,
+        ev100: 8.0,
+        title: "Brightly lighted stage-theater acts & boxing/wrestling rings",
+        desc: "Brightly lighted stage-theater acts (if lights are colored or subdued in 'mood' situations, use Scene 6). • Brightly lighted boxing, wrestling rings (for spectator shots in close proximity of ring, use Scene 5)."
+      },
+      {
+        num: 4,
+        ev100: 7.5,
+        title: "Neon-electric signs, theater marquees",
+        desc: "Neon-electric signs, theater marquees. To capture some detail in surrounding area, use Scene 7."
+      },
+      {
+        num: 5,
+        ev100: 7.0,
+        title: "Campfire groups; Bright TV/movie screens; Aerial circus",
+        desc: "Campfire groups (keep subjects close, but safe from heat and flames). • Bright TV and movie screen pictures, at 1/25 or 1/30 sec only (if in color, use Scene 8). • Brightly spotlighted aerial circus performances (for acts on ground level or spectators in lower seats, use Scene 7)."
+      },
+      {
+        num: 6,
+        ev100: 6.5,
+        title: "Brightly illuminated store windows & gas stations",
+        desc: "Brightly illuminated store display windows. • Brightly lighted gas stations."
+      },
+      {
+        num: 7,
+        ev100: 6.0,
+        title: "Indoor lighted Xmas tree; Bright interiors; Window portraits",
+        desc: "Indoor lighted Xmas tree (for detail in tree decorations/gifts or people, double exposure with flash fill-in may be needed unless room is brightly lit). • Brightly lighted interiors of homes, offices, restaurants and stores. • Portraits by brightly illuminated store display windows and theater marquees."
+      },
+      {
+        num: 8,
+        ev100: 5.5,
+        title: "Broadway-type Main streets; Night stadium sports; Race tracks",
+        desc: "Broadway-type, brightly lighted Main streets (for emphasis on reflections of rain-wet streets, use Scene 6). • Baseball and football night games, and other sport events on floodlighted fields and stadiums. • Race tracks."
+      },
+      {
+        num: 9,
+        ev100: 5.0,
+        title: "Fireworks, lightning bolts; Amusement parks & light trails",
+        desc: "Fireworks, lightning bolts (use f/stop calculated at 1-second exposure or set camera at OPEN for each burst or streak; try double exposures). • Brightly lighted amusement parks, fairs, carnivals and shopping centers. • Intricate pattern designs of vehicular headlights, ferris wheels and illuminated rides (use extra-long exposure)."
+      },
+      {
+        num: 10,
+        ev100: 4.5,
+        title: "Gymnasiums, arenas, indoor expositions; 150W lamp portraits",
+        desc: "Gymnasiums, auditoriums, arenas and average bright artificially lighted indoor expositions (basketball games, flower shows, boat shows, etc.). • Portraits by 150-watt table lamp."
+      },
+      {
+        num: 11,
+        ev100: 4.0,
+        title: "Floodlighted fountains, monuments & buildings (close)",
+        desc: "Floodlighted water fountains, monuments and buildings at close distances. At 25- to 50-ft distances, use Scene 13. If lights are colored or subdued, open up lens from 1 to 2 full stops depending on density of lighting effect. • Dimly lighted gas stations."
+      },
+      {
+        num: 12,
+        ev100: 3.5,
+        title: "Medium-bright interiors, hotel lobbies, terminals",
+        desc: "Medium-bright artificially lighted interiors of homes, offices and stores; hotel and theater lobbies, hospital rooms; and airport, bus and train terminals."
+      },
+      {
+        num: 13,
+        ev100: 3.0,
+        title: "Outdoor Xmas lights; Match/candlelight close-ups",
+        desc: "Outdoor lighted Xmas trees, home and building decorations (if after dark, use long exposure with underexposed flash fill-in at 1/2 guide number; at dusk, no flash needed). • Match-/candlelight or cigarette lighter close-ups (use white reflector fill-in for detail in shadowed area)."
+      },
+      {
+        num: 14,
+        ev100: 2.5,
+        title: "Interiors of subway trains, pullman coaches, buses & airliners",
+        desc: "Medium-bright, artificially lighted interiors of subway trains, pullman coaches, buses and airliners."
+      },
+      {
+        num: 15,
+        ev100: 2.0,
+        title: "Medium-bright street corners; City nightscapes at DUSK",
+        desc: "Medium-bright street-lamp corners and side streets. • Big city, Manhattan-type 'night' moonscapes at DUSK only! Try double exposure effect combining Scene 15 at dusk and Scenes 21 or 25 at night. Moon may be included if exposure is 1/25 sec or faster; otherwise superimpose moon separately."
+      },
+      {
+        num: 16,
+        ev100: 1.5,
+        title: "Niagara Falls, in white lights",
+        desc: "Niagara Falls, in white lights."
+      },
+      {
+        num: 17,
+        ev100: 1.0,
+        title: "Dimly lighted subway stations, platforms and stairways",
+        desc: "Dimly lighted subway stations, platforms and stairways."
+      },
+      {
+        num: 18,
+        ev100: 0.5,
+        title: "Dimly lighted night-clubs, ballrooms, etc.",
+        desc: "Dimly lighted night-clubs, ballrooms, etc."
+      },
+      {
+        num: 19,
+        ev100: 0.0,
+        title: "Outdoor railroad stations, freight yards & industrial plants",
+        desc: "Railroad stations (outdoors), freight yards and dimly lighted industrial plants with scattering of window lights, bulbs and pole-lamps. On rainy or foggy nights, use Scene 17. If snow on ground, use Scene 21."
+      },
+      {
+        num: 20,
+        ev100: -0.5,
+        title: "Niagara Falls, in colored lights",
+        desc: "Niagara Falls, in colored lights."
+      },
+      {
+        num: 21,
+        ev100: -1.0,
+        title: "Manhattan-type skylines of buildings & bridges at night",
+        desc: "Manhattan-type 'skylines' of buildings, bridges, etc. with scattering of window lights and other minute illuminations. Try double exposure with a superimposed moon!"
+      },
+      {
+        num: 22,
+        ev100: -1.5,
+        title: "Dimly lighted boat yards, docks and wharfs",
+        desc: "Dimly lighted boat yards, docks and wharfs. On rainy or foggy nights, use Scene 24."
+      },
+      {
+        num: 23,
+        ev100: -2.0,
+        title: "Dimly lighted small towns, villages and hamlets",
+        desc: "Dimly lighted small towns, villages, hamlets, etc. with a scattering of faint window lights and street lamps."
+      },
+      {
+        num: 24,
+        ev100: -2.5,
+        title: "Full-moon snow-scapes and icescapes",
+        desc: "Full-moon snow-scapes and icescapes."
+      },
+      {
+        num: 25,
+        ev100: -3.0,
+        title: "Full-moon seascapes and sandscapes",
+        desc: "Full-moon seascapes and sandscapes."
+      },
+      {
+        num: 26,
+        ev100: -3.5,
+        title: "Full-moon landscape (and Star Trails base setting)",
+        desc: "Full-moon landscape. (Also used as base alignment for Star Trails: convert seconds to minutes and minutes to hours.)"
+      }
+    ];
+
+    // 2. Exposure Values (EV 17 down to -1) from the PDF table
+    const EV_TABLE_DATA = [
+      { ev: 17, desc: "Rarely encountered in nature. Some man-made lighting." },
+      { ev: 16, desc: "Subjects in bright daylight on sand or snow." },
+      { ev: 15, desc: "Subjects in bright or hazy sun (Sunny 16 rule)." },
+      { ev: 14, desc: "Full moon (long lens). Subjects in weak hazy sun." },
+      { ev: 13, desc: "Gibbous moon (long lens). Subjects in cloudy-bright light (no shadows)." },
+      { ev: 12, desc: "Half moon (long lens). Subjects in heavy overcast." },
+      { ev: 11, desc: "Sunsets. Subjects in open shade." },
+      { ev: 10, desc: "Landscapes and skylines immediately after sunset. Crescent moon (long lens)." },
+      { ev: 9,  desc: "Landscapes and skylines 10 minutes after sunset. Neon lights. Spotlighted subjects." },
+      { ev: 8,  desc: "Las Vegas or Times Square at night. Store windows. Campfires, bonfires, burning buildings. Ice shows, night sports. Bright fluorescent interiors." },
+      { ev: 7,  desc: "Bottom of rainforest canopy. Brightly lighted nighttime streets. Indoor sports. Stage shows, circuses." },
+      { ev: 6,  desc: "Brightly lit home interiors at night. Fairs, amusement parks." },
+      { ev: 5,  desc: "Night home interiors, average light. School or church auditoriums. Subjects lit by campfires or bonfires." },
+      { ev: 4,  desc: "Candlelit close-ups. Christmas lights, floodlit buildings, fountains and monuments. Subjects under bright street lamps." },
+      { ev: 3,  desc: "Fireworks (with time exposure)." },
+      { ev: 2,  desc: "Lightning (with time exposure). Distant view of lighted skyline." },
+      { ev: 1,  desc: "Distant view of lighted skyline (dim)." },
+      { ev: 0,  desc: "Subjects lit by dim ambient artificial light." },
+      { ev: -1, desc: "Subjects lit by very dim ambient artificial light." }
+    ];
+
+    // 3. Fixed Window Scales (21 rows in each window, 0.5 stop per row)
+    const LEFT_FIXED_ROWS_21 = [
+      { iso: 6,    label: "• 6",   evShift: -4.0, major: false },
+      { iso: 8,    label: "• 8",   evShift: -3.5, major: false },
+      { iso: 12,   label: "12",    evShift: -3.0, major: true },
+      { iso: 15,   label: "15",    evShift: -2.5, major: true },
+      { iso: 25,   label: "25",    evShift: -2.0, major: true },
+      { iso: 32,   label: "• 32",  evShift: -1.5, major: false },
+      { iso: 50,   label: "50",    evShift: -1.0, major: true },
+      { iso: 64,   label: "• 64",  evShift: -0.5, major: false },
+      { iso: 100,  label: "100",   evShift:  0.0, major: true },
+      { iso: 125,  label: "• 125", evShift:  0.5, major: false },
+      { iso: 200,  label: "200",   evShift:  1.0, major: true },
+      { iso: 250,  label: "• 250", evShift:  1.5, major: false },
+      { iso: 400,  label: "400",   evShift:  2.0, major: true },
+      { iso: 500,  label: "• 500", evShift:  2.5, major: false },
+      { iso: 800,  label: "800",   evShift:  3.0, major: true },
+      { iso: 1000, label: "• 1000",evShift:  3.5, major: false },
+      { iso: 1600, label: "1600",  evShift:  4.0, major: true },
+      { iso: 2000, label: "• 2000",evShift:  4.5, major: false },
+      { iso: 3200, label: "3200",  evShift:  5.0, major: true },
+      { iso: 4000, label: "• 4000",evShift:  5.5, major: false },
+      { iso: 6400, label: "6400",  evShift:  6.0, major: true }
+    ];
+
+    const RIGHT_FIXED_FSTOPS = [
+      { label: "f/32",  av: 10.0, major: true },
+      { label: "f/27",  av:  9.5, major: false },
+      { label: "f/22",  av:  9.0, major: true },
+      { label: "f/19",  av:  8.5, major: false },
+      { label: "f/16",  av:  8.0, major: true },
+      { label: "f/13",  av:  7.5, major: false },
+      { label: "f/11",  av:  7.0, major: true },
+      { label: "f/9.5", av:  6.5, major: false },
+      { label: "f/8",   av:  6.0, major: true },
+      { label: "f/6.7", av:  5.5, major: false },
+      { label: "f/5.6", av:  5.0, major: true },
+      { label: "f/4.8", av:  4.5, major: false },
+      { label: "f/4",   av:  4.0, major: true },
+      { label: "f/3.4", av:  3.5, major: false },
+      { label: "f/2.8", av:  3.0, major: true },
+      { label: "f/2.4", av:  2.5, major: false },
+      { label: "f/2",   av:  2.0, major: true },
+      { label: "f/1.7", av:  1.5, major: false },
+      { label: "f/1.4", av:  1.0, major: true },
+      { label: "f/1.2", av:  0.5, major: false },
+      { label: "f/1",   av:  0.0, major: true }
+    ];
+
+    // Exact Jiffy Shutter Speed table indexed by integer halfTv = Math.round(Tv * 2)
+    const EXACT_SHUTTER_BY_HALF_TV = {
+      "-26": { label: "2 hr",   starLabel: "2 hr+",   sec: 7200 },
+      "-25": { label: "90 min", starLabel: "90 hr",   sec: 5400 },
+      "-24": { label: "1 hr",   starLabel: "60 hr",   sec: 3600 },
+      "-23": { label: "45 min", starLabel: "45 hr",   sec: 2700 },
+      "-22": { label: "30 min", starLabel: "30 hr",   sec: 1800 },
+      "-21": { label: "20 min", starLabel: "20 hr",   sec: 1200 },
+      "-20": { label: "15 min", starLabel: "15 hr",   sec: 900 },
+      "-19": { label: "10 min", starLabel: "10 hr",   sec: 600 },
+      "-18": { label: "8 min",  starLabel: "8 hr",    sec: 480 },
+      "-17": { label: "6 min",  starLabel: "6 hr",    sec: 360 },
+      "-16": { label: "4 min",  starLabel: "4 hr",    sec: 240 },
+      "-15": { label: "3 min",  starLabel: "3 hr",    sec: 180 },
+      "-14": { label: "2 min",  starLabel: "2 hr",    sec: 120 },
+      "-13": { label: "90 s",   starLabel: "90 min",  sec: 90 },
+      "-12": { label: "60 s",   starLabel: "60 min",  sec: 60 },
+      "-11": { label: "45 s",   starLabel: "45 min",  sec: 45 },
+      "-10": { label: "30 s",   starLabel: "30 min",  sec: 30 },
+      "-9":  { label: "20 s",   starLabel: "20 min",  sec: 20 },
+      "-8":  { label: "15 s",   starLabel: "15 min",  sec: 15 },
+      "-7":  { label: "10 s",   starLabel: "10 min",  sec: 10 },
+      "-6":  { label: "8 s",    starLabel: "8 min",   sec: 8 },
+      "-5":  { label: "6 s",    starLabel: "6 min",   sec: 6 },
+      "-4":  { label: "4 s",    starLabel: "4 min",   sec: 4 },
+      "-3":  { label: "3 s",    starLabel: "3 min",   sec: 3 },
+      "-2":  { label: "2 s",    starLabel: "2 min",   sec: 2 },
+      "-1":  { label: "1.5 s",  starLabel: "1.5 min", sec: 1.5 },
+      "0":   { label: "1 s",    starLabel: "1 min",   sec: 1 },
+      "1":   { label: "1/1.5",  starLabel: "1/1.5",   sec: 1/1.5 },
+      "2":   { label: "1/2",    starLabel: "1/2",     sec: 0.5 },
+      "3":   { label: "1/3",    starLabel: "1/3",     sec: 1/3 },
+      "4":   { label: "1/4",    starLabel: "1/4",     sec: 0.25 },
+      "5":   { label: "1/6",    starLabel: "1/6",     sec: 1/6 },
+      "6":   { label: "1/8",    starLabel: "1/8",     sec: 0.125 },
+      "7":   { label: "1/10",   starLabel: "1/10",    sec: 0.1 },
+      "8":   { label: "1/15",   starLabel: "1/15",    sec: 1/15 },
+      "9":   { label: "1/20",   starLabel: "1/20",    sec: 0.05 },
+      "10":  { label: "1/30",   starLabel: "1/30",    sec: 1/30 },
+      "11":  { label: "1/45",   starLabel: "1/45",    sec: 1/45 },
+      "12":  { label: "1/60",   starLabel: "1/60",    sec: 1/60 },
+      "13":  { label: "1/90",   starLabel: "1/90",    sec: 1/90 },
+      "14":  { label: "1/125",  starLabel: "1/125",   sec: 1/125 },
+      "15":  { label: "1/180",  starLabel: "1/180",   sec: 1/180 },
+      "16":  { label: "1/250",  starLabel: "1/250",   sec: 1/250 },
+      "17":  { label: "1/350",  starLabel: "1/350",   sec: 1/350 },
+      "18":  { label: "1/500",  starLabel: "1/500",   sec: 1/500 },
+      "19":  { label: "1/750",  starLabel: "1/750",   sec: 1/750 },
+      "20":  { label: "1/1000", starLabel: "1/1000",  sec: 1/1000 },
+      "21":  { label: "1/1500", starLabel: "1/1500",  sec: 1/1500 },
+      "22":  { label: "1/2000", starLabel: "1/2000",  sec: 1/2000 },
+      "23":  { label: "1/3000", starLabel: "1/3000",  sec: 1/3000 },
+      "24":  { label: "1/4000", starLabel: "1/4000",  sec: 1/4000 },
+      "25":  { label: "1/6000", starLabel: "1/6000",  sec: 1/6000 },
+      "26":  { label: "1/8000", starLabel: "1/8000",  sec: 1/8000 }
+    };
+
+    const SLIDER_SCALE = [];
+    for (let k = 0; k <= 54; k++) {
+      const ev100 = 17.0 - 0.5 * k;
+      const halfTv = -26 + k;
+      const sceneObj = SCENES_DATA.find(s => Math.abs(s.ev100 - ev100) < 0.01) || null;
+      const shutterObj = EXACT_SHUTTER_BY_HALF_TV[String(halfTv)] || { label: "—", starLabel: "—", sec: 1 };
+
+      SLIDER_SCALE.push({
+        k,
+        ev100,
+        sceneNum: sceneObj ? sceneObj.num : null,
+        halfTv,
+        shutterLabel: shutterObj.label,
+        starLabel: shutterObj.starLabel,
+        shutterSec: shutterObj.sec
+      });
+    }
+
+    // Application State
+    const state = {
+      selectedIsoIndex: 12, // Default: ISO 400 (index 12 in LEFT_FIXED_ROWS_21)
+      leftShift: 11,        // Default: aligns ISO 400 (r=12) with k_left = 12 + 11 = 23 (Scene 8, EV 5.5)
+      specialMode: 'normal',
+      focusedFStopIndex: 8
+    };
+
+    function getRowHeight() {
+      const val = getComputedStyle(document.documentElement).getPropertyValue('--row-h').trim();
+      return parseFloat(val) || 28;
+    }
+
+    function getCurrentAlignment() {
+      const isoRow = LEFT_FIXED_ROWS_21[state.selectedIsoIndex];
+      const kLeft = Math.max(0, Math.min(SLIDER_SCALE.length - 1, state.selectedIsoIndex + state.leftShift));
+      const leftItem = SLIDER_SCALE[kLeft];
+      const ev100 = leftItem.ev100;
+      const effectiveEv = ev100 + isoRow.evShift;
+      const sRight = 32 - kLeft + state.selectedIsoIndex;
+
+      return {
+        isoRow,
+        kLeft,
+        leftItem,
+        ev100,
+        effectiveEv,
+        sRight
+      };
+    }
+
+    function renderRightSliderStrip() {
+      const rightStrip = document.getElementById('right-slider-strip');
+      rightStrip.innerHTML = SLIDER_SCALE.map((item) => {
+        const isWholeStop = item.halfTv % 2 === 0;
+        const isTripod = item.shutterSec > 1 / 25 + 0.0001;
+        const displayLabel = state.specialMode === 'stars' ? item.starLabel : item.shutterLabel;
+        return `
+          <div class="scale-row ${isWholeStop ? 'scale-row-major font-bold' : 'text-stone-600'} px-2.5 justify-between font-mono-scale text-xs sm:text-sm ${isTripod ? 'text-amber-950' : 'text-stone-900'}">
+            <span>${displayLabel}</span>
+            ${isTripod ? '<span class="text-[9px] font-sans font-bold px-1 rounded bg-amber-200/80 text-amber-900" title="Tripod Recommended (< 1/25s)">T</span>' : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function buildCalculatorDOM() {
+      const filmCol = document.getElementById('film-speed-col');
+      const leftStrip = document.getElementById('left-slider-strip');
+      const fstopCol = document.getElementById('fstop-col');
+
+      // 1. Fixed Left Column (FILM SPEED)
+      filmCol.innerHTML = LEFT_FIXED_ROWS_21.map((row, idx) => `
+        <div
+          onclick="selectIsoRow(${idx})"
+          data-iso-idx="${idx}"
+          class="scale-row ${row.major ? 'scale-row-major font-bold text-stone-950' : 'text-stone-500 text-xs'} px-2 justify-between cursor-pointer hover:bg-amber-500/15 transition-colors font-mono-scale text-xs sm:text-sm"
+          title="Click to set Film Speed to ISO ${row.iso}"
+        >
+          <span class="text-[10px] text-stone-400">${row.major ? '▸' : ''}</span>
+          <span>${row.label}</span>
+        </div>
+      `).join('');
+
+      // 2. Fixed Right Column (f/STOP)
+      fstopCol.innerHTML = RIGHT_FIXED_FSTOPS.map((row, idx) => `
+        <div
+          onclick="selectFStopRow(${idx})"
+          data-fstop-idx="${idx}"
+          class="scale-row ${row.major ? 'scale-row-major font-bold text-stone-950' : 'text-stone-600 text-xs'} px-2.5 justify-between cursor-pointer hover:bg-amber-500/15 transition-colors font-mono-scale text-xs sm:text-sm"
+          title="Click to highlight ${row.label}"
+        >
+          <span>${row.label}</span>
+          <span class="text-[10px] text-stone-400">${row.major ? '◂' : ''}</span>
+        </div>
+      `).join('');
+
+      // 3. Sliding Left Strip (SCENE NUMBER & EV @ ISO 100)
+      leftStrip.innerHTML = SLIDER_SCALE.map((item) => {
+        const isScene = item.sceneNum !== null;
+        const isWholeEv = Number.isInteger(item.ev100);
+        const evDisplay = isWholeEv ? item.ev100.toString() : item.ev100.toFixed(1);
+        return `
+          <div class="scale-row ${isWholeEv ? 'scale-row-major' : ''} grid grid-cols-7 items-center text-center font-mono-scale text-xs sm:text-sm">
+            <div class="col-span-4 border-r border-stone-300/80 h-full flex items-center justify-center ${isScene ? 'font-bold text-red-900 bg-red-900/[0.05]' : 'text-stone-400'}">
+              ${isScene ? item.sceneNum : '·'}
+            </div>
+            <div class="col-span-3 h-full flex items-center justify-center text-[11px] sm:text-xs ${isWholeEv ? 'font-bold text-stone-800' : 'text-stone-500'}">
+              ${evDisplay}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // 4. Sliding Right Strip (SHUTTER SPEED)
+      renderRightSliderStrip();
+
+      populateDropdowns();
+    }
+
+    function populateDropdowns() {
+      const isoSelect = document.getElementById('select-iso');
+      isoSelect.innerHTML = LEFT_FIXED_ROWS_21.map((row, idx) =>
+        `<option value="${idx}">ISO ${row.iso}${row.major ? '' : ' (1/2)'}</option>`
+      ).join('');
+
+      const sceneSelect = document.getElementById('select-scene');
+      sceneSelect.innerHTML = `<option value="">-- Custom EV --</option>` + SCENES_DATA.map(s =>
+        `<option value="${s.num}">Scene ${s.num} (EV ${s.ev100})</option>`
+      ).join('');
+
+      const evSelect = document.getElementById('select-ev');
+      const evOptions = [];
+      for (let ev = 17; ev >= -5; ev -= 0.5) {
+        evOptions.push(`<option value="${ev}">EV ${Number.isInteger(ev) ? ev : ev.toFixed(1)}</option>`);
+      }
+      evSelect.innerHTML = evOptions.join('');
+    }
+
+    function updateUI() {
+      const rowH = getRowHeight();
+      const { isoRow, kLeft, leftItem, ev100, effectiveEv, sRight } = getCurrentAlignment();
+
+      // Explicit window height (21 rows)
+      const leftWin = document.getElementById('left-window');
+      const rightWin = document.getElementById('right-window');
+      leftWin.style.height = `${rowH * 21}px`;
+      rightWin.style.height = `${rowH * 21}px`;
+
+      // Position Left & Right Hairline Cursors
+      const leftCursor = document.getElementById('left-cursor');
+      const rightCursor = document.getElementById('right-cursor');
+      leftCursor.style.top = `${state.selectedIsoIndex * rowH}px`;
+      rightCursor.style.top = `${state.focusedFStopIndex * rowH}px`;
+
+      // Translate Left & Right Sliding Paper Strips
+      const leftStrip = document.getElementById('left-slider-strip');
+      const rightStrip = document.getElementById('right-slider-strip');
+      leftStrip.style.transform = `translateY(${-state.leftShift * rowH}px)`;
+      rightStrip.style.transform = `translateY(${-sRight * rowH}px)`;
+
+      // Sync Range Slider Control
+      const rangeInput = document.getElementById('insert-range-slider');
+      if (rangeInput) {
+        rangeInput.min = String(-state.selectedIsoIndex);
+        rangeInput.max = String((SLIDER_SCALE.length - 1) - state.selectedIsoIndex);
+        rangeInput.value = String(state.leftShift);
+      }
+
+      const evStr = Number.isInteger(ev100) ? ev100 : ev100.toFixed(1);
+      const effEvStr = Number.isInteger(effectiveEv) ? effectiveEv : effectiveEv.toFixed(1);
+      const sceneLabel = leftItem.sceneNum ? `Scene ${leftItem.sceneNum}` : `EV ${evStr}`;
+
+      const posBadge = document.getElementById('slider-pos-badge');
+      if (posBadge) {
+        posBadge.textContent = sceneLabel;
+      }
+
+      // Highlight selected ISO row text
+      document.querySelectorAll('[data-iso-idx]').forEach(el => {
+        const idx = Number(el.getAttribute('data-iso-idx'));
+        if (idx === state.selectedIsoIndex) {
+          el.classList.add('text-red-800', 'bg-red-900/10');
+        } else {
+          el.classList.remove('text-red-800', 'bg-red-900/10');
+        }
+      });
+
+      // Highlight selected f/Stop row text
+      document.querySelectorAll('[data-fstop-idx]').forEach(el => {
+        const idx = Number(el.getAttribute('data-fstop-idx'));
+        if (idx === state.focusedFStopIndex) {
+          el.classList.add('text-red-800', 'bg-red-900/10');
+        } else {
+          el.classList.remove('text-red-800', 'bg-red-900/10');
+        }
+      });
+
+      // Sync Quick-Select Dropdowns
+      document.getElementById('select-iso').value = String(state.selectedIsoIndex);
+      document.getElementById('select-scene').value = leftItem.sceneNum ? String(leftItem.sceneNum) : "";
+      document.getElementById('select-ev').value = String(ev100);
+
+      // Update Readout Headline & Labels
+      document.getElementById('readout-headline').textContent =
+        `ISO ${isoRow.iso} @ ${sceneLabel} (EV ${evStr})`;
+      document.getElementById('total-ev-label').textContent =
+        `Effective EV: ${effEvStr}`;
+
+      // Update Active Scene Description Card
+      const activeSceneObj = leftItem.sceneNum
+        ? SCENES_DATA.find(s => s.num === leftItem.sceneNum)
+        : null;
+      const closestEvObj = EV_TABLE_DATA.reduce((prev, curr) =>
+        Math.abs(curr.ev - ev100) < Math.abs(prev.ev - ev100) ? curr : prev
+      );
+
+      document.getElementById('active-scene-badge').textContent =
+        activeSceneObj ? `SCENE ${activeSceneObj.num}` : `GENERAL EV ${evStr}`;
+      document.getElementById('active-ev-badge').textContent =
+        `EV ${evStr} @ ISO 100`;
+      document.getElementById('active-scene-desc').textContent =
+        activeSceneObj
+          ? activeSceneObj.desc
+          : `EV ${evStr} Reference: ${closestEvObj.desc}`;
+
+      // Build Equivalent Exposures Grid & Check Warnings
+      const pairsGrid = document.getElementById('equivalent-pairs-grid');
+      let anyTripod = false;
+      let anyReciprocity = false;
+
+      const pairsHtml = RIGHT_FIXED_FSTOPS.map((fRow, rIdx) => {
+        const kRight = rIdx + sRight;
+        const sItem = SLIDER_SCALE[kRight];
+        if (!sItem) return '';
+
+        const isFocused = rIdx === state.focusedFStopIndex;
+        const isTripod = sItem.shutterSec > 1 / 25 + 0.0001;
+        const isReciprocity = sItem.shutterSec >= 1.0 - 0.0001;
+
+        if (isFocused) {
+          anyTripod = isTripod;
+          anyReciprocity = isReciprocity;
+        }
+
+        const timeText = state.specialMode === 'stars' ? sItem.starLabel : sItem.shutterLabel;
+
+        return `
+          <button
+            onclick="selectFStopRow(${rIdx})"
+            class="flex items-center justify-between px-2 py-1.5 rounded-lg border text-left font-mono-scale text-xs transition cursor-pointer ${
+              isFocused
+                ? 'bg-red-800 text-white border-red-950 font-bold shadow-sm'
+                : 'bg-[#fbf8ef] hover:bg-amber-100 text-stone-900 border-stone-300'
+            }"
+          >
+            <span>${fRow.label}</span>
+            <span class="${isFocused ? 'text-amber-200' : 'text-red-900 font-bold'}">${timeText}</span>
+          </button>
+        `;
+      }).join('');
+
+      pairsGrid.innerHTML = pairsHtml;
+
+      // Update Warning Badges (Tripod < 1/25s & Reciprocity >= 1s)
+      const badgesEl = document.getElementById('warning-badges');
+      let badgesHtml = '';
+      if (anyTripod) {
+        badgesHtml += `
+          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-600 text-white font-bold text-[11px] shadow-sm">
+            📷 USE TRIPOD (&lt; 1/25s)
+          </span>
+        `;
+      } else {
+        badgesHtml += `
+          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-700 text-white font-bold text-[11px] shadow-sm">
+            ✋ HANDHOLDABLE (≥ 1/25s)
+          </span>
+        `;
+      }
+      if (anyReciprocity) {
+        badgesHtml += `
+          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-800 text-amber-100 font-bold text-[11px] shadow-sm">
+            ⚠️ RECIPROCITY FAILURE (≥ 1s)
+          </span>
+        `;
+      }
+      badgesEl.innerHTML = badgesHtml;
+
+      // Highlight active scene in the directory list
+      document.querySelectorAll('[data-scene-card]').forEach(card => {
+        const sNum = Number(card.getAttribute('data-scene-card'));
+        if (leftItem.sceneNum === sNum) {
+          card.classList.add('ring-2', 'ring-red-700', 'bg-amber-100/90');
+          card.classList.remove('bg-[#fbf8ef]');
+        } else {
+          card.classList.remove('ring-2', 'ring-red-700', 'bg-amber-100/90');
+          card.classList.add('bg-[#fbf8ef]');
+        }
+      });
+    }
+
+    function setClampedLeftShift(desiredShift) {
+      const minLeftShift = -state.selectedIsoIndex;
+      const maxLeftShift = (SLIDER_SCALE.length - 1) - state.selectedIsoIndex;
+      state.leftShift = Math.max(minLeftShift, Math.min(maxLeftShift, Math.round(desiredShift)));
+      updateUI();
+    }
+
+    function nudgeSlide(delta) {
+      setClampedLeftShift(state.leftShift + delta);
+    }
+
+    function onRangeSlide(val) {
+      setClampedLeftShift(Number(val));
+    }
+
+    function selectIsoRow(isoIdx) {
+      const currentKLeft = state.selectedIsoIndex + state.leftShift;
+      state.selectedIsoIndex = isoIdx;
+      setClampedLeftShift(currentKLeft - isoIdx);
+    }
+
+    function selectFStopRow(fIdx) {
+      state.focusedFStopIndex = fIdx;
+      updateUI();
+    }
+
+    function onSelectISO(val) {
+      selectIsoRow(Number(val));
+    }
+
+    function onSelectScene(val) {
+      if (!val) return;
+      alignToScene(Number(val));
+    }
+
+    function onSelectEV(val) {
+      const targetEv = parseFloat(val);
+      const targetK = SLIDER_SCALE.findIndex(item => Math.abs(item.ev100 - targetEv) < 0.01);
+      if (targetK !== -1) {
+        setClampedLeftShift(targetK - state.selectedIsoIndex);
+      }
+    }
+
+    function alignToScene(sceneNum) {
+      const targetK = SLIDER_SCALE.findIndex(item => item.sceneNum === sceneNum);
+      if (targetK !== -1) {
+        setClampedLeftShift(targetK - state.selectedIsoIndex);
+      }
+    }
+
+    function setSpecialMode(mode) {
+      state.specialMode = mode;
+      const banner = document.getElementById('special-mode-banner');
+      const btnNormal = document.getElementById('btn-mode-normal');
+      const btnMoon = document.getElementById('btn-mode-moon');
+      const btnStars = document.getElementById('btn-mode-stars');
+
+      [btnNormal, btnMoon, btnStars].forEach(b => {
+        b.className = "px-3 py-1.5 rounded-lg text-xs font-semibold transition bg-stone-800 hover:bg-stone-700 text-stone-200 border border-stone-600 cursor-pointer";
+      });
+
+      if (mode === 'moon') {
+        btnMoon.className = "px-3 py-1.5 rounded-lg text-xs font-semibold transition bg-amber-600 text-white shadow cursor-pointer";
+        banner.classList.remove('hidden');
+        banner.innerHTML = `
+          <strong>🌙 MOON SHOTS MODE (Aligned to Scene 1):</strong>
+          For pictures of the moon only (not landscapes).
+          <span class="text-amber-300 font-semibold">Full Moon:</span> close lens down 1 stop •
+          <span class="text-amber-300 font-semibold">Half Moon:</span> use exposure shown •
+          <span class="text-amber-300 font-semibold">Crescent Moon:</span> open up lens 1 stop.
+          <span class="underline">Shutter speed must be 1/25s or faster</span> or the moon will blur!
+        `;
+        alignToScene(1);
+      } else if (mode === 'stars') {
+        btnStars.className = "px-3 py-1.5 rounded-lg text-xs font-semibold transition bg-amber-600 text-white shadow cursor-pointer";
+        banner.classList.remove('hidden');
+        banner.innerHTML = `
+          <strong>✨ STAR TRAILS MODE (Aligned to Scene 26):</strong>
+          Shutter speeds on the calculator are automatically converted per Jiffy Card rules:
+          <span class="text-amber-300 font-semibold">seconds become minutes</span> and
+          <span class="text-amber-300 font-semibold">minutes become hours</span>. Lock shutter open on Bulb (B) with a cable release &amp; sturdy tripod!
+        `;
+        alignToScene(26);
+      } else {
+        btnNormal.className = "px-3 py-1.5 rounded-lg text-xs font-semibold transition bg-amber-600 text-white shadow cursor-pointer";
+        banner.classList.add('hidden');
+      }
+
+      renderRightSliderStrip();
+      updateUI();
+    }
+
+    function switchRefTab(tab) {
+      ['scenes', 'ev', 'notes'].forEach(t => {
+        const panel = document.getElementById(`tab-panel-${t}`);
+        const btn = document.getElementById(`tab-btn-${t}`);
+        if (t === tab) {
+          panel.classList.remove('hidden');
+          btn.className = "py-2.5 px-2 bg-[#f6f1e3] text-red-900 border-b-2 border-red-800 cursor-pointer";
+        } else {
+          panel.classList.add('hidden');
+          btn.className = "py-2.5 px-2 text-stone-700 hover:bg-[#ebe3ce] cursor-pointer";
+        }
+      });
+    }
+
+    function renderSceneList() {
+      const query = document.getElementById('scene-search').value.trim().toLowerCase();
+      const container = document.getElementById('scene-list-container');
+      const filtered = SCENES_DATA.filter(s =>
+        !query ||
+        String(s.num) === query ||
+        `scene ${s.num}`.includes(query) ||
+        s.title.toLowerCase().includes(query) ||
+        s.desc.toLowerCase().includes(query)
+      );
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<p class="text-xs text-stone-500 text-center py-6">No matching scenes found for "${query}".</p>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map(s => `
+        <div
+          data-scene-card="${s.num}"
+          onclick="alignToScene(${s.num})"
+          class="bg-[#fbf8ef] hover:bg-amber-50 border border-stone-300 rounded-xl p-2.5 cursor-pointer transition shadow-xs"
+        >
+          <div class="flex items-center justify-between gap-2 mb-1">
+            <div class="flex items-center gap-2">
+              <span class="inline-flex items-center justify-center min-w-[26px] h-6 px-1.5 rounded bg-red-900 text-amber-50 font-mono-scale font-bold text-xs">
+                ${s.num}
+              </span>
+              <h4 class="font-bold text-xs text-stone-900">${s.title}</h4>
+            </div>
+            <span class="font-mono-scale text-[11px] font-bold text-stone-600 shrink-0">
+              EV ${Number.isInteger(s.ev100) ? s.ev100 : s.ev100.toFixed(1)}
+            </span>
+          </div>
+          <p class="text-[11px] text-stone-700 leading-snug pl-8">${s.desc}</p>
+        </div>
+      `).join('');
+
+      updateUI();
+    }
+
+    function renderEvTable() {
+      const container = document.getElementById('ev-list-container');
+      container.innerHTML = EV_TABLE_DATA.map(row => `
+        <div
+          onclick="onSelectEV(${row.ev})"
+          class="flex items-start gap-3 p-2.5 hover:bg-amber-100/80 cursor-pointer transition text-xs"
+        >
+          <span class="inline-flex items-center justify-center w-9 h-6 rounded bg-stone-800 text-amber-300 font-mono-scale font-bold shrink-0">
+            ${row.ev}
+          </span>
+          <p class="text-stone-800 leading-snug pt-0.5">${row.desc}</p>
+        </div>
+      `).join('');
+    }
+
+    function initDragAndWheel() {
+      const leftStrip = document.getElementById('left-slider-strip');
+      const rightStrip = document.getElementById('right-slider-strip');
+      const topTab = document.getElementById('top-slide-tab');
+      const bottomTab = document.getElementById('bottom-slide-tab');
+
+      const dragTargets = [leftStrip, rightStrip, topTab, bottomTab];
+
+      let isDragging = false;
+      let startY = 0;
+      let startLeftShift = 0;
+      let invertDirection = false;
+
+      function getClientY(e) {
+        if (e.touches && e.touches.length > 0) return e.touches[0].clientY;
+        return e.clientY;
+      }
+
+      function onDragStart(e, isRightStrip = false) {
+        if (e.cancelable && e.type === 'mousedown') e.preventDefault();
+        isDragging = true;
+        invertDirection = isRightStrip;
+        startY = getClientY(e);
+        startLeftShift = state.leftShift;
+        leftStrip.classList.add('is-dragging');
+        rightStrip.classList.add('is-dragging');
+      }
+
+      function onDragMove(e) {
+        if (!isDragging) return;
+        const currentY = getClientY(e);
+        const deltaY = currentY - startY;
+        const rowH = getRowHeight();
+        const rowDelta = Math.round(deltaY / rowH);
+        const appliedDelta = invertDirection ? rowDelta : -rowDelta;
+        setClampedLeftShift(startLeftShift + appliedDelta);
+      }
+
+      function onDragEnd() {
+        if (!isDragging) return;
+        isDragging = false;
+        leftStrip.classList.remove('is-dragging');
+        rightStrip.classList.remove('is-dragging');
+      }
+
+      dragTargets.forEach(el => {
+        if (!el) return;
+        const isRight = el.id === 'right-slider-strip';
+        el.addEventListener('mousedown', (e) => onDragStart(e, isRight));
+        el.addEventListener('touchstart', (e) => onDragStart(e, isRight), { passive: true });
+      });
+
+      window.addEventListener('mousemove', onDragMove);
+      window.addEventListener('touchmove', onDragMove, { passive: true });
+      window.addEventListener('mouseup', onDragEnd);
+      window.addEventListener('touchend', onDragEnd);
+
+      [document.getElementById('left-window'), document.getElementById('right-window')].forEach(win => {
+        win.addEventListener('wheel', (e) => {
+          e.preventDefault();
+          const dir = e.deltaY > 0 ? 1 : -1;
+          nudgeSlide(dir);
+        }, { passive: false });
+      });
+
+      window.addEventListener('resize', updateUI);
+    }
+
+    function openHowToModal() {
+      const m = document.getElementById('howto-modal');
+      m.classList.remove('hidden');
+      m.classList.add('flex');
+    }
+
+    function closeHowToModal() {
+      const m = document.getElementById('howto-modal');
+      m.classList.add('hidden');
+      m.classList.remove('flex');
+    }
+
+    window.setSpecialMode = setSpecialMode;
+    window.openHowToModal = openHowToModal;
+    window.closeHowToModal = closeHowToModal;
+    window.nudgeSlide = nudgeSlide;
+    window.onRangeSlide = onRangeSlide;
+    window.selectIsoRow = selectIsoRow;
+    window.selectFStopRow = selectFStopRow;
+    window.onSelectISO = onSelectISO;
+    window.onSelectScene = onSelectScene;
+    window.onSelectEV = onSelectEV;
+    window.alignToScene = alignToScene;
+    window.switchRefTab = switchRefTab;
+    window.renderSceneList = renderSceneList;
+
+    function bootJiffyCalculator() {
+      buildCalculatorDOM();
+      renderSceneList();
+      renderEvTable();
+      initDragAndWheel();
+      updateUI();
+    }
+
+    if (document.readyState === 'loading') {
+      window.addEventListener('DOMContentLoaded', bootJiffyCalculator);
+    } else {
+      bootJiffyCalculator();
+    }
+  </script>
+</body>
+</html>

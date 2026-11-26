@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f2e9">
+  <meta name="description" content="A pocket exposure guide for film photography, inspired by the Jiffy Calculator.">
+  <title>Jiffy Calculator — a little light meter</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="#top" aria-label="Jiffy Calculator home"><span class="brand-mark">J.</span><span>JIFFY <span class="brand-light">CALCULATOR</span></span></a>
+    <a class="header-link" href="#guide">HOW TO USE <span aria-hidden="true">↗</span></a>
+  </header>
+
+  <main id="top">
+    <section class="intro">
+      <div>
+        <p class="eyebrow"><span class="dot"></span> A FIELD GUIDE FOR FILM PHOTOGRAPHERS</p>
+        <h1>A little help<br>with <em>the light.</em></h1>
+        <p class="intro-copy">No meter? No problem. Find your scene, set your film speed, and get an exposure in a jiffy.</p>
+      </div>
+      <div class="intro-stamp" aria-hidden="true"><span>ESTIMATE YOUR EXPOSURE</span><strong>☼</strong><span>TAKE THE SHOT</span></div>
+    </section>
+
+    <section class="calculator" aria-labelledby="calculator-title">
+      <div class="calculator-heading">
+        <div><p class="eyebrow">THE EXPOSURE CALCULATOR</p><h2 id="calculator-title">Let’s set the scene.</h2></div>
+        <span class="heading-note">A DIGITAL TAKE ON THE CLASSIC SLIDE RULE <span aria-hidden="true">✳</span></span>
+      </div>
+      <div class="calculator-grid">
+        <div class="controls">
+          <div class="field">
+            <label for="scene"><span class="step">01</span> Choose your scene</label>
+            <p>Pick the closest match to the light you’re shooting in.</p>
+            <div class="select-wrap"><select id="scene"></select></div>
+            <p id="scene-detail" class="scene-detail"></p>
+          </div>
+          <div class="field">
+            <label for="iso"><span class="step">02</span> Set your film speed</label>
+            <p>The ISO number on your roll of film.</p>
+            <div class="select-wrap"><select id="iso"></select></div>
+          </div>
+          <div class="field last-field">
+            <label for="aperture"><span class="step">03</span> Choose an aperture</label>
+            <p>Or explore all the equivalent exposures below.</p>
+            <div class="select-wrap"><select id="aperture"></select></div>
+          </div>
+        </div>
+        <div class="result-panel" aria-live="polite">
+          <div class="result-top"><span>YOUR EXPOSURE</span><span class="result-star" aria-hidden="true">✳</span></div>
+          <div class="result-main">
+            <p>SET YOUR SHUTTER TO</p>
+            <div id="shutter" class="shutter"></div>
+            <p id="shutter-unit" class="shutter-unit"></p>
+          </div>
+          <div class="result-bottom">
+            <div><span>FILM SPEED</span><strong id="result-iso"></strong></div>
+            <div><span>APERTURE</span><strong id="result-aperture"></strong></div>
+            <div><span>SCENE EV¹</span><strong id="result-ev"></strong></div>
+          </div>
+          <p class="result-footnote">¹ Exposure value at ISO 100. An estimate, not a meter reading.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="equivalents" aria-labelledby="equivalents-title">
+      <div class="section-title"><div><p class="eyebrow">MORE WAYS TO GET THE SHOT</p><h2 id="equivalents-title">Equivalent exposures<span class="accent-period">.</span></h2></div><p>Same light, different settings. Choose the combination that works for your photograph.</p></div>
+      <div class="table-wrap">
+        <table><thead><tr><th scope="col">APERTURE</th><th scope="col">SHUTTER SPEED</th><th scope="col"> </th></tr></thead><tbody id="exposure-table"></tbody></table>
+      </div>
+      <p class="table-note">The original slide’s half-stop values are shown. “Outside scale” means the required time is beyond its printed shutter range.</p>
+    </section>
+
+    <section id="guide" class="guide">
+      <div><p class="eyebrow">A FEW THINGS TO KEEP IN MIND</p><h2>Good light, good luck<span class="accent-period">.</span></h2></div>
+      <div class="guide-copy"><p>These are starting points, not measured readings. Light varies, so bracket your exposures when you can.</p><p>For long exposures, use a tripod and check your film’s datasheet for reciprocity failure. Special subjects like fireworks, screens, and moonlight may need extra care.</p><p>Based on <em>The New Jiffy Calculator</em>, adapted by M. Zomborszki from S. P. Martin’s Jiffy Calculator, with exposure data credited to Fred Parker.</p></div>
+    </section>
+  </main>
+  <footer><span>JIFFY CALCULATOR <span aria-hidden="true">✳</span></span><span>MADE FOR SLOWER MOMENTS.</span></footer>
+</body>
+</html>
