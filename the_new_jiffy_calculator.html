@@ -321,13 +321,13 @@
         <!-- DUAL CUT-OUT WINDOWS CONTAINER -->
         <div class="grid grid-cols-2 gap-2.5 sm:gap-4">
 
-          <!-- LEFT WINDOW: FILM SPEED (Fixed) | SCENE NUMBER & EV @ ISO 100 (Sliding) -->
+          <!-- LEFT WINDOW: FILM SPEED (Fixed) | EV @ ISO 100 & SCENE NUMBER (Sliding) -->
           <div class="flex flex-col">
             <!-- Window Column Headers -->
             <div class="grid grid-cols-12 text-center border-2 border-b-0 border-stone-800 rounded-t-lg bg-[#e2d7bc] py-1.5 px-1 text-[10px] sm:text-[11px] font-card-title font-bold uppercase leading-tight tracking-wide text-stone-900">
               <div class="col-span-5 border-r border-stone-500/50 pr-0.5">FILM<br/>SPEED</div>
-              <div class="col-span-4 border-r border-stone-500/50 px-0.5 text-red-900">SCENE<br/>NUMBER</div>
-              <div class="col-span-3 pl-0.5">EV<br/><span class="text-[9px] font-normal">@ISO100</span></div>
+              <div class="col-span-3 border-r border-stone-500/50 px-0.5">EV<br/><span class="text-[9px] font-normal">@ISO100</span></div>
+              <div class="col-span-4 pl-0.5 text-red-900">SCENE<br/>NUMBER</div>
             </div>
 
             <!-- Left Cutout Window Viewport -->
@@ -340,7 +340,7 @@
                 <!-- Populated by JS -->
               </div>
 
-              <!-- Sliding Insert Strip: SCENE NUMBER & EV @ ISO 100 -->
+              <!-- Sliding Insert Strip: EV @ ISO 100 & SCENE NUMBER -->
               <div id="left-slider-strip" class="col-span-7 paper-insert relative">
                 <!-- Populated by JS -->
               </div>
@@ -563,161 +563,161 @@
      * ============================================================================
      */
 
-    // 1. Complete 26 Scene Numbers transcribed verbatim from the PDF
+    // 1. Complete 26 Scene Numbers calibrated to EV 11 (Scene 1) down to EV -1.5 (Scene 26)
     const SCENES_DATA = [
       {
         num: 1,
-        ev100: 9.0,
+        ev100: 11.0,
         title: "Ice shows in multiple white spotlights",
         desc: "Ice shows, in multiple white spotlights. If spotlights are colored, use Scene 4."
       },
       {
         num: 2,
-        ev100: 8.5,
+        ev100: 10.5,
         title: "Burning buildings, fires",
         desc: "Burning buildings, fires. For detail in surrounding areas, use Scene 5."
       },
       {
         num: 3,
-        ev100: 8.0,
+        ev100: 10.0,
         title: "Brightly lighted stage-theater acts & boxing/wrestling rings",
         desc: "Brightly lighted stage-theater acts (if lights are colored or subdued in 'mood' situations, use Scene 6). • Brightly lighted boxing, wrestling rings (for spectator shots in close proximity of ring, use Scene 5)."
       },
       {
         num: 4,
-        ev100: 7.5,
+        ev100: 9.5,
         title: "Neon-electric signs, theater marquees",
         desc: "Neon-electric signs, theater marquees. To capture some detail in surrounding area, use Scene 7."
       },
       {
         num: 5,
-        ev100: 7.0,
+        ev100: 9.0,
         title: "Campfire groups; Bright TV/movie screens; Aerial circus",
         desc: "Campfire groups (keep subjects close, but safe from heat and flames). • Bright TV and movie screen pictures, at 1/25 or 1/30 sec only (if in color, use Scene 8). • Brightly spotlighted aerial circus performances (for acts on ground level or spectators in lower seats, use Scene 7)."
       },
       {
         num: 6,
-        ev100: 6.5,
+        ev100: 8.5,
         title: "Brightly illuminated store windows & gas stations",
         desc: "Brightly illuminated store display windows. • Brightly lighted gas stations."
       },
       {
         num: 7,
-        ev100: 6.0,
+        ev100: 8.0,
         title: "Indoor lighted Xmas tree; Bright interiors; Window portraits",
         desc: "Indoor lighted Xmas tree (for detail in tree decorations/gifts or people, double exposure with flash fill-in may be needed unless room is brightly lit). • Brightly lighted interiors of homes, offices, restaurants and stores. • Portraits by brightly illuminated store display windows and theater marquees."
       },
       {
         num: 8,
-        ev100: 5.5,
+        ev100: 7.5,
         title: "Broadway-type Main streets; Night stadium sports; Race tracks",
         desc: "Broadway-type, brightly lighted Main streets (for emphasis on reflections of rain-wet streets, use Scene 6). • Baseball and football night games, and other sport events on floodlighted fields and stadiums. • Race tracks."
       },
       {
         num: 9,
-        ev100: 5.0,
+        ev100: 7.0,
         title: "Fireworks, lightning bolts; Amusement parks & light trails",
         desc: "Fireworks, lightning bolts (use f/stop calculated at 1-second exposure or set camera at OPEN for each burst or streak; try double exposures). • Brightly lighted amusement parks, fairs, carnivals and shopping centers. • Intricate pattern designs of vehicular headlights, ferris wheels and illuminated rides (use extra-long exposure)."
       },
       {
         num: 10,
-        ev100: 4.5,
+        ev100: 6.5,
         title: "Gymnasiums, arenas, indoor expositions; 150W lamp portraits",
         desc: "Gymnasiums, auditoriums, arenas and average bright artificially lighted indoor expositions (basketball games, flower shows, boat shows, etc.). • Portraits by 150-watt table lamp."
       },
       {
         num: 11,
-        ev100: 4.0,
+        ev100: 6.0,
         title: "Floodlighted fountains, monuments & buildings (close)",
         desc: "Floodlighted water fountains, monuments and buildings at close distances. At 25- to 50-ft distances, use Scene 13. If lights are colored or subdued, open up lens from 1 to 2 full stops depending on density of lighting effect. • Dimly lighted gas stations."
       },
       {
         num: 12,
-        ev100: 3.5,
+        ev100: 5.5,
         title: "Medium-bright interiors, hotel lobbies, terminals",
         desc: "Medium-bright artificially lighted interiors of homes, offices and stores; hotel and theater lobbies, hospital rooms; and airport, bus and train terminals."
       },
       {
         num: 13,
-        ev100: 3.0,
+        ev100: 5.0,
         title: "Outdoor Xmas lights; Match/candlelight close-ups",
         desc: "Outdoor lighted Xmas trees, home and building decorations (if after dark, use long exposure with underexposed flash fill-in at 1/2 guide number; at dusk, no flash needed). • Match-/candlelight or cigarette lighter close-ups (use white reflector fill-in for detail in shadowed area)."
       },
       {
         num: 14,
-        ev100: 2.5,
+        ev100: 4.5,
         title: "Interiors of subway trains, pullman coaches, buses & airliners",
         desc: "Medium-bright, artificially lighted interiors of subway trains, pullman coaches, buses and airliners."
       },
       {
         num: 15,
-        ev100: 2.0,
+        ev100: 4.0,
         title: "Medium-bright street corners; City nightscapes at DUSK",
         desc: "Medium-bright street-lamp corners and side streets. • Big city, Manhattan-type 'night' moonscapes at DUSK only! Try double exposure effect combining Scene 15 at dusk and Scenes 21 or 25 at night. Moon may be included if exposure is 1/25 sec or faster; otherwise superimpose moon separately."
       },
       {
         num: 16,
-        ev100: 1.5,
+        ev100: 3.5,
         title: "Niagara Falls, in white lights",
         desc: "Niagara Falls, in white lights."
       },
       {
         num: 17,
-        ev100: 1.0,
+        ev100: 3.0,
         title: "Dimly lighted subway stations, platforms and stairways",
         desc: "Dimly lighted subway stations, platforms and stairways."
       },
       {
         num: 18,
-        ev100: 0.5,
+        ev100: 2.5,
         title: "Dimly lighted night-clubs, ballrooms, etc.",
         desc: "Dimly lighted night-clubs, ballrooms, etc."
       },
       {
         num: 19,
-        ev100: 0.0,
+        ev100: 2.0,
         title: "Outdoor railroad stations, freight yards & industrial plants",
         desc: "Railroad stations (outdoors), freight yards and dimly lighted industrial plants with scattering of window lights, bulbs and pole-lamps. On rainy or foggy nights, use Scene 17. If snow on ground, use Scene 21."
       },
       {
         num: 20,
-        ev100: -0.5,
+        ev100: 1.5,
         title: "Niagara Falls, in colored lights",
         desc: "Niagara Falls, in colored lights."
       },
       {
         num: 21,
-        ev100: -1.0,
+        ev100: 1.0,
         title: "Manhattan-type skylines of buildings & bridges at night",
         desc: "Manhattan-type 'skylines' of buildings, bridges, etc. with scattering of window lights and other minute illuminations. Try double exposure with a superimposed moon!"
       },
       {
         num: 22,
-        ev100: -1.5,
+        ev100: 0.5,
         title: "Dimly lighted boat yards, docks and wharfs",
         desc: "Dimly lighted boat yards, docks and wharfs. On rainy or foggy nights, use Scene 24."
       },
       {
         num: 23,
-        ev100: -2.0,
+        ev100: 0.0,
         title: "Dimly lighted small towns, villages and hamlets",
         desc: "Dimly lighted small towns, villages, hamlets, etc. with a scattering of faint window lights and street lamps."
       },
       {
         num: 24,
-        ev100: -2.5,
+        ev100: -0.5,
         title: "Full-moon snow-scapes and icescapes",
         desc: "Full-moon snow-scapes and icescapes."
       },
       {
         num: 25,
-        ev100: -3.0,
+        ev100: -1.0,
         title: "Full-moon seascapes and sandscapes",
         desc: "Full-moon seascapes and sandscapes."
       },
       {
         num: 26,
-        ev100: -3.5,
+        ev100: -1.5,
         title: "Full-moon landscape (and Star Trails base setting)",
         desc: "Full-moon landscape. (Also used as base alignment for Star Trails: convert seconds to minutes and minutes to hours.)"
       }
@@ -873,7 +873,7 @@
     // Application State
     const state = {
       selectedIsoIndex: 12, // Default: ISO 400 (index 12 in LEFT_FIXED_ROWS_21)
-      leftShift: 11,        // Default: aligns ISO 400 (r=12) with k_left = 12 + 11 = 23 (Scene 8, EV 5.5)
+      leftShift: 7,         // Default: aligns ISO 400 (r=12) with k_left = 12 + 7 = 19 (Scene 8, EV 7.5)
       specialMode: 'normal',
       focusedFStopIndex: 8
     };
@@ -946,19 +946,19 @@
           <span class="text-[10px] text-stone-400">${row.major ? '◂' : ''}</span>
         </div>
       `).join('');
-
-      // 3. Sliding Left Strip (SCENE NUMBER & EV @ ISO 100)
+      // 3. Sliding Left Strip (EV @ ISO 100 on left, SCENE NUMBER on right — matching printed card)
       leftStrip.innerHTML = SLIDER_SCALE.map((item) => {
         const isScene = item.sceneNum !== null;
         const isWholeEv = Number.isInteger(item.ev100);
-        const evDisplay = isWholeEv ? item.ev100.toString() : item.ev100.toFixed(1);
+        const showEvLabel = isWholeEv && item.ev100 >= -1 && item.ev100 <= 17;
+        const evDisplay = showEvLabel ? item.ev100.toString() : '';
         return `
           <div class="scale-row ${isWholeEv ? 'scale-row-major' : ''} grid grid-cols-7 items-center text-center font-mono-scale text-xs sm:text-sm">
-            <div class="col-span-4 border-r border-stone-300/80 h-full flex items-center justify-center ${isScene ? 'font-bold text-red-900 bg-red-900/[0.05]' : 'text-stone-400'}">
-              ${isScene ? item.sceneNum : '·'}
-            </div>
-            <div class="col-span-3 h-full flex items-center justify-center text-[11px] sm:text-xs ${isWholeEv ? 'font-bold text-stone-800' : 'text-stone-500'}">
+            <div class="col-span-3 border-r border-stone-300/80 h-full flex items-center justify-center text-[11px] sm:text-xs ${showEvLabel ? 'font-bold text-stone-900' : 'text-stone-400'}">
               ${evDisplay}
+            </div>
+            <div class="col-span-4 h-full flex items-center justify-center ${isScene ? 'font-bold text-red-900 bg-red-900/[0.05]' : 'text-stone-400'}">
+              ${isScene ? item.sceneNum : ''}
             </div>
           </div>
         `;
@@ -977,14 +977,16 @@
       ).join('');
 
       const sceneSelect = document.getElementById('select-scene');
-      sceneSelect.innerHTML = `<option value="">-- Custom EV --</option>` + SCENES_DATA.map(s =>
-        `<option value="${s.num}">Scene ${s.num} (EV ${s.ev100})</option>`
-      ).join('');
+      sceneSelect.innerHTML = `<option value="">-- Custom EV --</option>` + SCENES_DATA.map(s => {
+        const evLabel = Number.isInteger(s.ev100) ? `EV ${s.ev100}` : `between EV ${Math.ceil(s.ev100)} & ${Math.floor(s.ev100)}`;
+        return `<option value="${s.num}">Scene ${s.num} (${evLabel})</option>`;
+      }).join('');
 
       const evSelect = document.getElementById('select-ev');
       const evOptions = [];
-      for (let ev = 17; ev >= -5; ev -= 0.5) {
-        evOptions.push(`<option value="${ev}">EV ${Number.isInteger(ev) ? ev : ev.toFixed(1)}</option>`);
+      for (let ev = 17; ev >= -1; ev -= 0.5) {
+        const label = Number.isInteger(ev) ? `EV ${ev}` : `EV ${ev.toFixed(1)} (1/2 stop)`;
+        evOptions.push(`<option value="${ev}">${label}</option>`);
       }
       evSelect.innerHTML = evOptions.join('');
     }
@@ -1022,6 +1024,9 @@
       const evStr = Number.isInteger(ev100) ? ev100 : ev100.toFixed(1);
       const effEvStr = Number.isInteger(effectiveEv) ? effectiveEv : effectiveEv.toFixed(1);
       const sceneLabel = leftItem.sceneNum ? `Scene ${leftItem.sceneNum}` : `EV ${evStr}`;
+      const evWindowBadgeText = Number.isInteger(ev100) && ev100 >= -1 && ev100 <= 17
+        ? `EV ${ev100} @ ISO 100`
+        : `Half-Stop (EV ${evStr}) @ ISO 100`;
 
       const posBadge = document.getElementById('slider-pos-badge');
       if (posBadge) {
@@ -1069,8 +1074,7 @@
 
       document.getElementById('active-scene-badge').textContent =
         activeSceneObj ? `SCENE ${activeSceneObj.num}` : `GENERAL EV ${evStr}`;
-      document.getElementById('active-ev-badge').textContent =
-        `EV ${evStr} @ ISO 100`;
+      document.getElementById('active-ev-badge').textContent = evWindowBadgeText;
       document.getElementById('active-scene-desc').textContent =
         activeSceneObj
           ? activeSceneObj.desc
@@ -1288,7 +1292,7 @@
               <h4 class="font-bold text-xs text-stone-900">${s.title}</h4>
             </div>
             <span class="font-mono-scale text-[11px] font-bold text-stone-600 shrink-0">
-              EV ${Number.isInteger(s.ev100) ? s.ev100 : s.ev100.toFixed(1)}
+              ${Number.isInteger(s.ev100) ? `EV ${s.ev100}` : `EV ${Math.ceil(s.ev100)}½`}
             </span>
           </div>
           <p class="text-[11px] text-stone-700 leading-snug pl-8">${s.desc}</p>
